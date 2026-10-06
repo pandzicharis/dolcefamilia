@@ -1,0 +1,44 @@
+{
+  "name": "dolce-familia",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -n api,web -c yellow,cyan \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "node --watch --env-file=.env --no-warnings=ExperimentalWarning server/index.js",
+    "dev:web": "vite",
+    "build": "tsc -b && vite build",
+    "start": "node --env-file=.env --no-warnings=ExperimentalWarning server/index.js",
+    "typecheck": "tsc -b --noEmit",
+    "preview": "vite preview",
+    "lint": "oxlint"
+  },
+  "dependencies": {
+    "@fontsource-variable/dm-sans": "^5.3.0",
+    "@fontsource-variable/fraunces": "^5.3.0",
+    "clsx": "^2.1.1",
+    "express": "^5.2.1",
+    "framer-motion": "^14.0.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.4",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "autoprefixer": "^10.6.1",
+    "concurrently": "^10.0.5",
+    "oxlint": "^1.81.0",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^3.4.19",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0"
+  },
+  "description": "Dolce Familia — web shop za ručno rađene torte i kolače",
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

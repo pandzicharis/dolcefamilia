@@ -1,0 +1,373 @@
+/* Fraunces: soft.css nosi wght + SOFT osu. Namjerno NE uvozimo i index.css -
+   oba deklarisu istu familiju i isti unicode-range, pa bi se poklapali. */
+@import '@fontsource-variable/fraunces/soft.css';
+@import '@fontsource-variable/dm-sans/index.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ========================================================================
+       SIROVE RAMPE - kao trojke RGB kanala, da Tailwind alpha modifikatori rade.
+       Nijedna komponenta ne smije ovo koristiti direktno; koristi aliase ispod.
+       ======================================================================== */
+
+    /* CREAM - slojevi pozadine */
+    --c-cream-50: 255 252 247;   /* #FFFCF7  izdignuto: kartice, drawer, modal */
+    --c-cream-100: 250 244 234;  /* #FAF4EA  pozadina stranice */
+    --c-cream-200: 243 234 220;  /* #F3EADC  udubljeno: inputi, trake, skeleton */
+    --c-cream-300: 233 221 203;  /* #E9DDCB  dekorativne linije, disabled povrsina */
+    --c-cream-400: 217 201 178;  /* #D9C9B2  teze ispune */
+
+    /* MOCHA - topla neutralna rampa za tekst */
+    --c-mocha-900: 33 26 20;     /* #211A14  naslovi */
+    --c-mocha-800: 51 42 34;     /* #332A22  naglaseni body */
+    --c-mocha-700: 74 62 51;     /* #4A3E33  body */
+    --c-mocha-600: 107 91 75;    /* #6B5B4B  meta, labele */
+    --c-mocha-500: 138 120 102;  /* #8A7866  placeholder, GRANICE FORMI */
+    --c-mocha-400: 168 149 127;  /* #A8957F  samo dekorativno - pada AA */
+
+    /* COCOA - primarni akcent */
+    --c-cocoa-50: 247 239 232;   /* #F7EFE8 */
+    --c-cocoa-100: 234 220 206;  /* #EADCCE */
+    --c-cocoa-200: 214 188 161;  /* #D6BCA1 */
+    --c-cocoa-300: 176 142 107;  /* #B08E6B */
+    --c-cocoa-400: 138 101 68;   /* #8A6544 */
+    --c-cocoa-500: 107 74 46;    /* #6B4A2E  focus ring */
+    --c-cocoa-600: 85 58 36;     /* #553A24  hover */
+    --c-cocoa-700: 67 45 28;     /* #432D1C  PRIMARNI */
+    --c-cocoa-800: 50 33 20;     /* #322114  pritisnuto, cijena */
+
+    /* GOLD - sekundarni akcent. Radi ono sto radi i na pravoj ambalazi:
+       hairline linije, eyebrow labele, SVG potezi. Nikad popunjeno dugme. */
+    --c-gold-100: 246 235 210;   /* #F6EBD2 */
+    --c-gold-200: 235 216 174;   /* #EBD8AE */
+    --c-gold-300: 220 192 131;   /* #DCC083  tekst na kakao podlozi (7.30:1) */
+    --c-gold-400: 201 166 92;    /* #C9A65C  METALIK - NIKAD tekst na kremu (2.11:1) */
+    --c-gold-500: 174 137 64;    /* #AE8940 */
+    --c-gold-600: 133 99 31;     /* #85631F  najsvjetlije zlato koje prolazi AA */
+    --c-gold-700: 111 84 35;     /* #6F5423  eyebrow, oznaka "KM" (6.47:1) */
+
+    /* SAGE - uspjeh */
+    --c-sage-100: 227 235 223;
+    --c-sage-500: 110 139 94;
+    --c-sage-700: 63 87 51;
+
+    /* ROUGE - greska. Topla cigla, ne vatrogasno crvena. */
+    --c-rouge-100: 248 227 222;
+    --c-rouge-500: 180 71 47;
+    --c-rouge-600: 154 58 36;
+    --c-rouge-700: 126 44 25;
+
+    /* ========================================================================
+       SEMANTICKI ALIASI - ovo komponente koriste.
+       Dark tema kasnije = prepisati samo ovih ~18 linija u .dark {} bloku.
+       ======================================================================== */
+    --bg-page: var(--c-cream-100);
+    --bg-surface: var(--c-cream-50);
+    --bg-sunken: var(--c-cream-200);
+
+    --text-heading: var(--c-mocha-900);
+    --text-body: var(--c-mocha-700);
+    --text-muted: var(--c-mocha-600);
+    --text-disabled: var(--c-mocha-500);
+    --text-on-dark: var(--c-cream-50);
+
+    --border-hairline: var(--c-cream-300);
+    --border-control: var(--c-mocha-500);
+
+    --accent: var(--c-cocoa-700);
+    --accent-hover: var(--c-cocoa-600);
+    --accent-press: var(--c-cocoa-800);
+    --focus-ring: var(--c-cocoa-500);
+
+    --grain-blend: multiply;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    /* Pozadina je gradijent, ne fill. Ravan #FAF4EA se cita kao "default".
+       Ukupna putanja svjetline je ~5% - korisnik ne smije moci pokazati na njega. */
+    background: radial-gradient(
+      130% 85% at 50% -12%,
+      rgb(var(--c-cream-50)) 0%,
+      rgb(var(--c-cream-100)) 46%,
+      rgb(var(--c-cream-200)) 100%
+    );
+    background-attachment: fixed;
+    background-color: rgb(var(--bg-page));
+    color: rgb(var(--text-body));
+    font-family: theme('fontFamily.sans');
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    min-height: 100dvh;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: theme('fontFamily.display');
+    color: rgb(var(--text-heading));
+    font-variation-settings: 'SOFT' 50;
+    /* Bosanski ima duge slozenice - balansirano prelamanje sprjecava siroce. */
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* iOS Safari zumira viewport na fokus za sve ispod 16px i razbije
+     checkout layout usred kucanja. Ovo nije pregovorljivo. */
+  input, select, textarea {
+    font-size: 16px;
+    font-family: inherit;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--focus-ring));
+    outline-offset: 2px;
+  }
+  /* Klik misem na polje ne smije ostaviti prsten koji korisnik nije trazio. */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  ::selection {
+    background: rgb(var(--c-gold-200));
+    color: rgb(var(--c-mocha-900));
+  }
+}
+
+@layer components {
+  /* --- Tipografska skala -------------------------------------------------- */
+
+  /* Minimalisticki: naslov je prisutan, ali ne vice. Velicina radi posao
+     tek kad je oko njega prazno — ne kad je sam po sebi ogroman. */
+  .t-display {
+    font-family: theme('fontFamily.display');
+    /* Minimum je 30px, ne 36px: na 375px ekranu je slogan od 46 znakova na
+       36px padao u tri reda visoka 120px, prije nego sto se vidjela ijedna
+       torta. Gornja granica je netaknuta - desktop izgleda isto. */
+    font-size: clamp(1.875rem, 5.6vw, 3.75rem);
+    font-weight: 400;
+    line-height: 1.08;
+    letter-spacing: -0.028em;
+    font-variation-settings: 'SOFT' 50;
+  }
+
+  .t-h1 {
+    font-family: theme('fontFamily.display');
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+  }
+
+  .t-h2 {
+    font-family: theme('fontFamily.display');
+    font-size: clamp(1.625rem, 3.6vw, 2.5rem);
+    font-weight: 400;
+    line-height: 1.14;
+    letter-spacing: -0.02em;
+  }
+
+  .t-h3 {
+    font-family: theme('fontFamily.display');
+    font-size: 1.25rem;
+    font-weight: 500;
+    line-height: 1.22;
+    letter-spacing: -0.015em;
+  }
+  @media (min-width: 768px) {
+    .t-h3 { font-size: 1.5rem; }
+  }
+
+  .t-card-title {
+    font-family: theme('fontFamily.display');
+    font-size: 1.1875rem; /* 19px */
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    color: rgb(var(--text-heading));
+  }
+  @media (min-width: 1024px) {
+    .t-card-title { font-size: 1.25rem; }
+  }
+
+  .t-lead {
+    font-size: 1.0625rem;
+    line-height: 1.6;
+  }
+  @media (min-width: 768px) {
+    .t-lead { font-size: 1.125rem; }
+  }
+
+  .t-small {
+    font-size: 0.8125rem; /* 13px */
+    line-height: 1.45;
+    letter-spacing: 0.005em;
+  }
+
+  /* Tracking skalira obrnuto sa velicinom: -0.03em na 80px -> +0.16em na 11px.
+     Ujednacen tracking je najpouzdanija razlika izmedju slovoslaganog i otkucanog. */
+  .t-eyebrow {
+    font-size: 0.6875rem; /* 11px */
+    font-weight: 500;
+    line-height: 1.25;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgb(var(--c-gold-700));
+  }
+  @media (min-width: 768px) {
+    .t-eyebrow { font-size: 0.75rem; }
+  }
+
+  .t-price {
+    font-family: theme('fontFamily.display');
+    font-size: 1.25rem;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    color: rgb(var(--c-cocoa-800));
+    font-variant-numeric: tabular-nums;
+  }
+  @media (min-width: 1024px) {
+    .t-price { font-size: 1.375rem; }
+  }
+
+  .t-currency {
+    font-family: theme('fontFamily.sans');
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgb(var(--c-gold-700));
+    font-variant-numeric: normal;
+  }
+
+  /* --- Potpisni detalji ---------------------------------------------------- */
+
+  /* Zrno. Ravan krem je neprijatelj: velika povrsina jedne svijetle nijanse
+     izgleda kao nestilizovana pozadina i tjera gradijente da bandaju.
+     stitchTiles='stitch' je kriticno - bez njega se vidi mreza spojeva. */
+  .grain {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    pointer-events: none;
+    opacity: 0.035;
+    mix-blend-mode: var(--grain-blend);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 160px 160px;
+  }
+  /* fixed + mix-blend-mode promovise kompozitni sloj preko cijelog viewporta
+     koji se re-blenda na svaki frame scrolla. Na mobitelu je ionako nevidljivo. */
+  @media (max-width: 767px) { .grain { display: none; } }
+  @media print { .grain { display: none; } }
+
+  /* Pipani rub kreme: niz istih lukova sa zlatnom perlom na svakom spoju.
+     Ponavlja se kao background, ne kao rastegnut SVG - rastegnut viewBox bi
+     na 1440px ekranu dao plitke, razvucene lukove.
+
+     Boje su hex, ne CSS varijable: data-URI pozadina ne vidi :root. Isti
+     kompromis vec stoji na .grain. Ako se zlato pomjeri u paleti, pomjeriti
+     i #C9A65C ovdje. */
+  .traka-krem {
+    height: 14px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='14'%3E%3Cpath d='M0 12 q6 -9.5 12 0 q6 -9.5 12 0 q6 -9.5 12 0 q6 -9.5 12 0' fill='none' stroke='%23C9A65C' stroke-opacity='0.5' stroke-width='1.1'/%3E%3Cg fill='%23C9A65C' fill-opacity='0.45'%3E%3Ccircle cx='0' cy='12' r='1.1'/%3E%3Ccircle cx='12' cy='12' r='1.1'/%3E%3Ccircle cx='24' cy='12' r='1.1'/%3E%3Ccircle cx='36' cy='12' r='1.1'/%3E%3Ccircle cx='48' cy='12' r='1.1'/%3E%3C/g%3E%3C/svg%3E");
+    background-repeat: repeat-x;
+    background-size: 48px 14px;
+    background-position: 0 50%;
+  }
+
+  /* Puna 1px zlatna ivica je najcesci "luksuzni template" signal.
+     Linija koja se materijalizuje i rastvori cita se kao tiskarski ornament. */
+  .rule-gold {
+    height: 1px;
+    border: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgb(var(--c-gold-400) / 0.55) 18%,
+      rgb(var(--c-gold-400) / 0.55) 82%,
+      transparent 100%
+    );
+  }
+
+  .rule-gold--short {
+    width: 56px;
+    height: 1px;
+    border: 0;
+    background: linear-gradient(
+      90deg,
+      rgb(var(--c-gold-400) / 0.7) 0%,
+      rgb(var(--c-gold-400) / 0.7) 70%,
+      transparent 100%
+    );
+  }
+
+  /* Naslov se otkriva iza maske. Na line-height 1.06 kvacica na C i akut na C
+     sjede IZNAD em kutije - clip mora ici na wrapper sa kompenzacijom,
+     nikad direktno na element sa display tipom. */
+  .mask-clip {
+    overflow: hidden;
+    padding-top: 0.12em;
+    margin-top: -0.12em;
+    padding-bottom: 0.08em;
+    margin-bottom: -0.08em;
+  }
+
+  .container-page {
+    width: 100%;
+    max-width: theme('maxWidth.container');
+    margin-inline: auto;
+    padding-inline: theme('spacing.gutter');
+  }
+
+  /* Prosiruje pogodak na >=44px bez napuhivanja vizuelnog elementa. */
+  .tap-safe {
+    position: relative;
+  }
+  .tap-safe::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    min-width: 44px;
+    min-height: 44px;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+  }
+}
+
+@layer utilities {
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  /* Scrollbar u drawerima - diskretan, u paleti */
+  .scroll-soft {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--c-cream-400)) transparent;
+  }
+}
+
+/* Mreza za sve sto ne vozi Framer Motion: CSS hover tranzicije,
+   skeleton shimmer, smooth scroll. MotionConfig ovo ne pokriva. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

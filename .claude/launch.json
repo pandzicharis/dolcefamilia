@@ -1,0 +1,14 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "la-familia",
+      "runtimeExecutable": "/bin/bash",
+      "runtimeArgs": [
+        "-c",
+        "cd /Users/harispandzic/Desktop/projects/la-familia && unset PORT && export PATH=\"/Users/harispandzic/.nvm/versions/node/v22.21.0/bin:$PATH\" && exec npm run dev"
+      ],
+      "port": 5173
+    }
+  ]
+}
