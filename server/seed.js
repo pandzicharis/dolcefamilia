@@ -1,4 +1,4 @@
-import { db } from './db.js'
+import { one, tx } from './db.js'
 
 export const CATEGORIES = [
   { slug: 'cokoladne', name: 'Čokoladne' },
@@ -13,7 +13,7 @@ const VELICINE = (mala, srednja, velika) => [
   { label: 'Velika · 20–24 osobe', price_fening: velika },
 ]
 
-const PRODUCTS = [
+export const PRODUCTS = [
   {
     slug: 'cokoladna-fantazija',
     name: 'Čokoladna fantazija',
@@ -23,7 +23,7 @@ const PRODUCTS = [
       'Biskvit sa čokoladnim kremom, preliven tamnom čokoladom koja se spušta niz stranice. Na vrhu praline od lješnjaka, listići čokolade i vafl štapići, a oko ruba mljeveni lješnjaci. Torta za one koji čokoladu ne uzimaju na pola.',
     allergens: 'Gluten, jaja, mlijeko, orašasti plodovi, soja',
     image: '/img/cokoladna-fantazija.webp',
-    is_featured: 1,
+    is_featured: true,
     variants: VELICINE(7000, 9500, 12500),
   },
   {
@@ -35,7 +35,7 @@ const PRODUCTS = [
       'Najjednostavnija torta iz naše ponude i najčešće naručivana. Čokoladni biskvit, krem od mliječne čokolade i preljev koji se hvata niz stranice. Gore samo vijenac od rozeta, čokoladnih srca i vafl štapića.',
     allergens: 'Gluten, jaja, mlijeko, soja',
     image: '/img/cokoladni-drip.webp',
-    is_featured: 1,
+    is_featured: true,
     variants: VELICINE(6000, 8200, 10800),
   },
   {
@@ -47,7 +47,7 @@ const PRODUCTS = [
       'Svijetli biskvit sa kremom od vanile, tamni preljev i vijenac od keksa, pralina i rozeta. Zlatne svjećice sa brojem idu uz tortu — recite nam koji broj treba i stiže postavljen.',
     allergens: 'Gluten, jaja, mlijeko, orašasti plodovi, soja',
     image: '/img/kremasta-osamnaestica.webp',
-    is_featured: 1,
+    is_featured: true,
     variants: VELICINE(7500, 10000, 13000),
   },
   {
@@ -70,7 +70,7 @@ const PRODUCTS = [
       'Vanilin biskvit sa bijelim kremom i roze preljevom, vijenac od rozeta po rubu i zvjezdice sa šljokicama. Figure jednoroga i svjećica sa brojem dolaze uz tortu.',
     allergens: 'Gluten, jaja, mlijeko',
     image: '/img/jednorog.webp',
-    is_featured: 1,
+    is_featured: true,
     variants: VELICINE(6800, 9200, 12000),
   },
   {
@@ -104,7 +104,7 @@ const PRODUCTS = [
       'Torta za prvi rođendan: rozete u roze i bijeloj nijansi, srce od pipanog krema sa strane i puslice na štapiću. Ime djeteta ispisujemo sa strane, a broj sa krunicom i natpis idu uz tortu. Dva mafina dolaze uz svaku veličinu — jedan za slavljenika, jedan za fotografiju.',
     allergens: 'Gluten, jaja, mlijeko',
     image: '/img/prva-godina.webp',
-    is_featured: 1,
+    is_featured: true,
     variants: VELICINE(7500, 10000, 13000),
   },
   {
@@ -120,46 +120,51 @@ const PRODUCTS = [
   },
 ]
 
-export function seedIfEmpty() {
-  const { n } = db.prepare('SELECT COUNT(*) AS n FROM products').get()
+export async function seedIfEmpty() {
+  const { n } = await one('SELECT COUNT(*) AS n FROM products')
   if (n > 0) return { seeded: false, count: n }
 
-  const insertProduct = db.prepare(`
-    INSERT INTO products
-      (slug, name, category, short_desc, long_desc, unit, serves, allergens,
-       image, is_featured, is_available, sort_order)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `)
-  const insertVariant = db.prepare(`
-    INSERT INTO product_variants (product_id, label, price_fening, sort_order)
-    VALUES (?, ?, ?, ?)
-  `)
-
-  db.exec('BEGIN')
-  try {
-    PRODUCTS.forEach((p, i) => {
-      insertProduct.run(
-        p.slug,
-        p.name,
-        p.category,
-        p.short_desc,
-        p.long_desc,
-        p.unit ?? 'kom',
-        p.serves ?? '',
-        p.allergens ?? '',
-        p.image ?? null,
-        p.is_featured ?? 0,
-        p.is_available ?? 1,
-        i,
+  await tx(async (client) => {
+    for (const [i, p] of PRODUCTS.entries()) {
+      const { rows } = await client.query(
+        `INSERT INTO products
+           (slug, name, category, short_desc, long_desc, unit, serves, allergens,
+            image, is_featured, is_available, sort_order)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+         RETURNING id`,
+        [
+          p.slug,
+          p.name,
+          p.category,
+          p.short_desc,
+          p.long_desc,
+          p.unit ?? 'kom',
+          p.serves ?? '',
+          p.allergens ?? '',
+          p.image ?? null,
+          Boolean(p.is_featured),
+          p.is_available ?? true,
+          i,
+        ],
       )
-      const { id } = db.prepare('SELECT last_insert_rowid() AS id').get()
-      p.variants.forEach((v, vi) => insertVariant.run(id, v.label, v.price_fening, vi))
-    })
-    db.exec('COMMIT')
-  } catch (err) {
-    db.exec('ROLLBACK')
-    throw err
-  }
+      const id = rows[0].id
+
+      // Varijante jednog proizvoda idu jednim INSERT-om sa vise VALUES redova:
+      // tri odvojena upita po proizvodu bi na udaljenoj bazi bilo 27 skokova.
+      const vrijednosti = []
+      const params = []
+      p.variants.forEach((v, vi) => {
+        const b = params.length
+        vrijednosti.push(`($${b + 1}, $${b + 2}, $${b + 3}, $${b + 4})`)
+        params.push(id, v.label, v.price_fening, vi)
+      })
+      await client.query(
+        `INSERT INTO product_variants (product_id, label, price_fening, sort_order)
+         VALUES ${vrijednosti.join(', ')}`,
+        params,
+      )
+    }
+  })
 
   return { seeded: true, count: PRODUCTS.length }
 }

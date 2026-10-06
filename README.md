@@ -175,6 +175,68 @@ linija po proizvodu — vidi ispod.
 
 ---
 
+## Deploy (Vercel)
+
+Sajt je na Vercelu: statički build iz `dist/` servira CDN, a cijeli Express
+API radi kao **jedna serverless funkcija** (`api/index.js`). Rute su iste kao
+lokalno — `vercel.json` prebacuje `/api/*` na funkciju, a sve ostalo na
+`index.html` zbog SPA rutiranja.
+
+### Dva režima
+
+API radi i bez baze. Režim određuje prisustvo `DATABASE_URL`:
+
+| | `katalog: "demo"` | `katalog: "baza"` |
+|---|---|---|
+| Kad | `DATABASE_URL` nije postavljen | `DATABASE_URL` postavljen |
+| Katalog | iz seed podataka ([`server/demo.js`](server/demo.js)) | iz Postgresa |
+| Akcije | nema ih | rade |
+| Narudžbe | `503` sa porukom | upisuju se |
+| Admin | `503` | radi |
+
+Provjera je `GET /api/health`.
+
+Demo režim postoji da svjež deploy **radi i izgleda ispravno prije nego iko
+napravi bazu** — katalog, slike, izbor veličine i korpa rade. Ono što ne može
+raditi vraća 503 sa jasnom porukom, umjesto da tiho proguta narudžbu.
+
+### Prelazak na pravu bazu
+
+1. U Vercel projektu: **Storage → Create Database → Neon**. Kopirajte
+   connection string — **onaj sa `-pooler` u hostu**. Serverless funkcija
+   otvara vezu po instanci, a direktni endpoint potroši limit veza prije nego
+   sajt primi ozbiljan promet.
+2. Za fotografije koje admin učitava: **Storage → Create → Blob**. Token
+   (`BLOB_READ_WRITE_TOKEN`) Vercel sam doda u projekat.
+3. Environment Variables → dodajte `DATABASE_URL`, `ADMIN_TOKEN` i
+   `SHOP_TIMEZONE=Europe/Sarajevo`.
+4. Jednom, sa svoje mašine, napunite bazu:
+   ```bash
+   DATABASE_URL="<neon-pooler-url>" npm run db:setup
+   ```
+5. Redeploy.
+
+### Zašto SQLite više ne radi
+
+Vercelove funkcije nemaju disk na koji se smije pisati — podižu se i gase sa
+praznim fajl sistemom. SQLite fajl i `data/uploads/` bi nestajali sa svakim
+hladnim startom, dakle i narudžbe sa njima. Zato baza ide u Postgres, a
+učitane fotografije u Vercel Blob ([`server/storage.js`](server/storage.js)),
+koji u bazu upisuje puni `https://` URL.
+
+Lokalno ništa od toga ne treba: bez `BLOB_READ_WRITE_TOKEN`-a slike idu na
+disk u `data/uploads/` kao i prije.
+
+### Lokalni razvoj sa Postgresom
+
+```bash
+npm run db:up      # Postgres 16 u Dockeru na :55432
+npm run db:setup   # shema + seed
+npm run dev
+```
+
+---
+
 ## Fotografije
 
 Prave fotografije su u `public/img/`, po dvije po proizvodu:

@@ -1,4 +1,4 @@
-import { db } from './db.js'
+import { all, one, ZONA } from './db.js'
 
 export const PROMO_KINDS = ['procenat', 'iznos']
 export const PROMO_SCOPES = ['sve', 'kategorija', 'proizvod']
@@ -6,12 +6,40 @@ export const PROMO_SCOPES = ['sve', 'kategorija', 'proizvod']
 /** Cijena nikad ne pada ispod 1 KM, koliko god akcija bila velika. */
 const MIN_CIJENA_FENING = 100
 
-/** Danas u LOKALNOJ zoni kao YYYY-MM-DD. new Date().toISOString() bi dao UTC
- *  dan, pa bi akcija koja pocinje danas u 01:00 po lokalnom bila jos neaktivna. */
+/**
+ * Danas u zoni RADNJE kao YYYY-MM-DD.
+ *
+ * Ne `new Date().toISOString()` (to je UTC dan, pa bi akcija koja pocinje
+ * danas u 01:00 po sarajevskom bila jos neaktivna) i ne lokalna zona procesa
+ * (na Vercelu je to UTC, dakle ista greska). Zona je eksplicitna - vidi ZONA.
+ *
+ * en-CA je ovdje jedini locale koji treba: njegov kratki format JESTE
+ * YYYY-MM-DD. bs-BA se ne koristi nigdje na serveru jer su mu CLDR podaci
+ * prazni (vidi src/lib/format.ts).
+ */
+const ISO_DAN = new Intl.DateTimeFormat('en-CA', {
+  timeZone: ZONA,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+})
+
 export function danas() {
-  const d = new Date()
-  const pad = (n) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+  return ISO_DAN.format(new Date())
+}
+
+/**
+ * Datum od prije `n` dana, u istoj zoni i istom obliku kao danas().
+ *
+ * Racuna se od PODNEVA UTC, ne od trenutnog vremena: oduzimanje 24h od
+ * ponoci u sedmici kad se mijenja racunanje vremena promasi dan za jedan.
+ * Podne je dovoljno daleko od obje granice da pomak od sat vremena ne smeta.
+ */
+export function danPrije(n) {
+  const [g, m, d] = danas().split('-').map(Number)
+  const x = new Date(Date.UTC(g, m - 1, d, 12) - n * 86_400_000)
+  const pad = (v) => String(v).padStart(2, '0')
+  return `${x.getUTCFullYear()}-${pad(x.getUTCMonth() + 1)}-${pad(x.getUTCDate())}`
 }
 
 const selectPromo = `
@@ -22,22 +50,21 @@ const selectPromo = `
 
 /** Sve akcije koje danas vaze. Jedan upit za cijeli katalog. */
 export function activePromotions(dan = danas()) {
-  return db
-    .prepare(
-      `${selectPromo}
-        WHERE is_active = 1
-          AND (starts_on IS NULL OR starts_on <= ?)
-          AND (ends_on   IS NULL OR ends_on   >= ?)`,
-    )
-    .all(dan, dan)
+  return all(
+    `${selectPromo}
+      WHERE is_active = TRUE
+        AND (starts_on IS NULL OR starts_on <= $1)
+        AND (ends_on   IS NULL OR ends_on   >= $1)`,
+    [dan],
+  )
 }
 
 export function allPromotions() {
-  return db.prepare(`${selectPromo} ORDER BY is_active DESC, id DESC`).all()
+  return all(`${selectPromo} ORDER BY is_active DESC, id DESC`)
 }
 
 export function promotionById(id) {
-  return db.prepare(`${selectPromo} WHERE id = ?`).get(id)
+  return one(`${selectPromo} WHERE id = $1`, [id])
 }
 
 /** Snizena cijena jedne varijante. Zaokruzuje se na fening, nikad na float. */
