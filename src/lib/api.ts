@@ -1,8 +1,8 @@
+import { KATALOG, KATEGORIJE } from '../data/katalog'
 import type {
   AdminImage,
   AdminOrder,
   AdminSummary,
-  Category,
   OrderPayload,
   OrderResult,
   Product,
@@ -54,14 +54,29 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 const auth = (token: string) => ({ Authorization: `Bearer ${token}` })
 
 export const api = {
-  products: (params?: { category?: string; featured?: boolean }) => {
-    const q = new URLSearchParams()
-    if (params?.category) q.set('category', params.category)
-    if (params?.featured) q.set('featured', '1')
-    const qs = q.toString()
-    return request<Product[]>(`/products${qs ? `?${qs}` : ''}`)
+  /**
+   * Ponuda se čita iz builda (`src/data/katalog.ts`), ne sa servera.
+   *
+   * Katalog je statičan sadržaj koji se mijenja par puta godišnje, pa nema
+   * razloga da prvi ekran čeka mrežni zahtjev — ni da ponuda nestane kad API
+   * ne odgovori. Filtriranje je isto ono koje je radio `/api/products`.
+   *
+   * Narudžbe i admin i dalje idu na server; samo čitanje kataloga ne.
+   */
+  products: async (params?: { category?: string; featured?: boolean }) =>
+    KATALOG.filter(
+      (p) =>
+        (!params?.category || p.category === params.category) &&
+        (!params?.featured || p.is_featured),
+    ),
+
+  categories: async () => KATEGORIJE,
+
+  product: async (slug: string) => {
+    const p = KATALOG.find((x) => x.slug === slug)
+    if (!p) throw new ApiError('Proizvod nije pronađen.', 404)
+    return p
   },
-  categories: () => request<Category[]>('/products/categories'),
 
   createOrder: (payload: OrderPayload) =>
     request<OrderResult>('/orders', { method: 'POST', body: JSON.stringify(payload) }),
